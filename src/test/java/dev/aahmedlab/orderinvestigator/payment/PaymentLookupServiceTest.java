@@ -51,4 +51,9 @@ class PaymentLookupServiceTest {
   void invalidPaymentIdThrows(String paymentId) {
     assertThrows(InvalidPaymentIdException.class, () -> service.findByPaymentId(paymentId));
   }
+
+  @Test
+  void findsCapturedPaymentP500() {
+    assertEquals("CAPTURED", service.findByPaymentId("P_500").orElseThrow().paymentStatus());
+  }
 }

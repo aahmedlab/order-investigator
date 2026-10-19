@@ -16,6 +16,7 @@ public class OrderLookupService {
     ordersById.put(127, new OrderDetails(127, "PAYMENT_FAILED", "P_999"));
     ordersById.put(128, new OrderDetails(128, "PAYMENT_FAILED", "P_300"));
     ordersById.put(129, new OrderDetails(129, "PROCESSING", "P_400"));
+    ordersById.put(130, new OrderDetails(130, "PROCESSING", "P_500"));
   }
 
   public Optional<OrderDetails> findByOrderId(final int orderId) {

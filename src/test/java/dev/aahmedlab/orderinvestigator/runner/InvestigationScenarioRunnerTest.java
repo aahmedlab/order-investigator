@@ -18,8 +18,8 @@ class InvestigationScenarioRunnerTest {
   @Test
   void runsSelectedScenarioAndPrintsAnswer() throws Exception {
     String question =
-        "For order 129, check whether payment was captured and explain what is holding fulfillment.";
-    when(coordinator.investigate(anyString())).thenReturn("captured; held out of stock");
+        "For order 130, check whether payment was captured and explain what is holding fulfillment.";
+    when(coordinator.investigate(anyString())).thenReturn("captured; fulfillment unavailable");
     PrintStream original = System.out;
     ByteArrayOutputStream captured = new ByteArrayOutputStream();
     System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
@@ -31,7 +31,7 @@ class InvestigationScenarioRunnerTest {
 
     verify(coordinator).investigate(question);
     String output = captured.toString(StandardCharsets.UTF_8);
-    assertTrue(output.contains("Scenario: payment_and_fulfillment"));
-    assertTrue(output.contains("Answer: captured; held out of stock"));
+    assertTrue(output.contains("Scenario: fulfillment_lookup_unavailable"));
+    assertTrue(output.contains("Answer: captured; fulfillment unavailable"));
   }
 }

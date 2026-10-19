@@ -43,4 +43,10 @@ class OrderLookupServiceTest {
   void negativeOrderIdReturnsEmpty() {
     assertTrue(service.findByOrderId(-1).isEmpty());
   }
+
+  @Test
+  void findsOrder130LinkedToP500() {
+    assertEquals(
+        new OrderDetails(130, "PROCESSING", "P_500"), service.findByOrderId(130).orElseThrow());
+  }
 }

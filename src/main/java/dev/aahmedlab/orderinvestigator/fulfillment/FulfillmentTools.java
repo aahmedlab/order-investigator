@@ -17,8 +17,18 @@ public class FulfillmentTools {
           "Retrieve recorded fulfillment status and hold reason using an order ID. "
               + "Returns NO_FULFILLMENT_FOUND if absent; this does not establish that the order itself is missing.")
   public String lookupFulfillment(final int orderId) {
-    Optional<FulfillmentDetails> fulfillmentDetailsOpt =
-        fulfillmentLookupService.findByOrderId(orderId);
+    Optional<FulfillmentDetails> fulfillmentDetailsOpt;
+    try {
+      fulfillmentDetailsOpt = fulfillmentLookupService.findByOrderId(orderId);
+    } catch (FulfillmentLookupUnavailableException e) {
+      return "Order ID: "
+          + orderId
+          + "\n"
+          + "error  : FULFILLMENT_LOOKUP_UNAVAILABLE"
+          + "\n"
+          + "message: "
+          + e.getMessage();
+    }
 
     if (fulfillmentDetailsOpt.isEmpty()) {
       return "Order ID: " + orderId + "\n" + "Lookup result: NO_FULFILLMENT_FOUND";

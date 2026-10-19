@@ -37,4 +37,24 @@ class FulfillmentToolsTest {
         "Order ID: 129\nFulfillment status: HELD\nHold Reason: OUT_OF_STOCK",
         real.lookupFulfillment(129));
   }
+
+  @Test
+  void reportsServiceUnavailable() {
+    when(lookupService.findByOrderId(130))
+        .thenThrow(new FulfillmentLookupUnavailableException("down"));
+
+    assertEquals(
+        "Order ID: 130\nerror  : FULFILLMENT_LOOKUP_UNAVAILABLE\nmessage: down",
+        tools.lookupFulfillment(130));
+  }
+
+  @Test
+  void endToEndOutageAgainstRealService() {
+    FulfillmentTools real = new FulfillmentTools(new FulfillmentLookupService());
+
+    assertEquals(
+        "Order ID: 130\nerror  : FULFILLMENT_LOOKUP_UNAVAILABLE\n"
+            + "message: Fulfillment system is currently down!",
+        real.lookupFulfillment(130));
+  }
 }

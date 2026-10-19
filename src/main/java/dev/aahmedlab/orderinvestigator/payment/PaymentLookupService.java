@@ -13,6 +13,7 @@ public class PaymentLookupService {
     paymentById.put("P_100", new PaymentDetails("P_100", "REJECTED", "CARD_EXPIRED"));
     paymentById.put("P_200", new PaymentDetails("P_200", "CAPTURED", ""));
     paymentById.put("P_400", new PaymentDetails("P_400", "CAPTURED", ""));
+    paymentById.put("P_500", new PaymentDetails("P_500", "CAPTURED", ""));
   }
 
   public Optional<PaymentDetails> findByPaymentId(final String paymentId) {
