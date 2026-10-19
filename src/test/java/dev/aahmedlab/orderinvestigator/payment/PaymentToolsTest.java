@@ -62,7 +62,8 @@ class PaymentToolsTest {
         .thenThrow(new InvalidPaymentIdException("bad id"));
 
     assertEquals(
-        "Payment ID: bad\nerror  : INVALID_PAYMENT_ID\nmessage: bad id", tools.lookupPayment("bad"));
+        "Payment ID: bad\nerror  : INVALID_PAYMENT_ID\nmessage: bad id",
+        tools.lookupPayment("bad"));
   }
 
   @Test

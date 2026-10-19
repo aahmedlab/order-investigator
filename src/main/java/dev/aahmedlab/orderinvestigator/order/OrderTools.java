@@ -12,7 +12,10 @@ public class OrderTools {
     this.orderLookupService = orderLookupService;
   }
 
-  @Tool
+  @Tool(
+      description =
+          "Retrieve an order's recorded status and linked payment ID using its order ID. "
+              + "Returns NO_ORDER_FOUND if absent.")
   public String lookupOrder(final int orderId) {
     Optional<OrderDetails> orderDetailsOpt = orderLookupService.findByOrderId(orderId);
 

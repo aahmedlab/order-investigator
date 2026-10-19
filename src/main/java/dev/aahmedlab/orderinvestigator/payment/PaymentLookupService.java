@@ -3,7 +3,6 @@ package dev.aahmedlab.orderinvestigator.payment;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,6 +12,7 @@ public class PaymentLookupService {
   public PaymentLookupService() {
     paymentById.put("P_100", new PaymentDetails("P_100", "REJECTED", "CARD_EXPIRED"));
     paymentById.put("P_200", new PaymentDetails("P_200", "CAPTURED", ""));
+    paymentById.put("P_400", new PaymentDetails("P_400", "CAPTURED", ""));
   }
 
   public Optional<PaymentDetails> findByPaymentId(final String paymentId) {
@@ -24,7 +24,8 @@ public class PaymentLookupService {
 
   private void validatePaymentId(final String paymentId) {
     if (paymentId == null || !paymentId.matches("P_\\d+")) {
-      throw new InvalidPaymentIdException("Payment Id cannot be empty, must start with 'P_', and must be followed by a number");
+      throw new InvalidPaymentIdException(
+          "Payment Id cannot be empty, must start with 'P_', and must be followed by a number");
     }
   }
 }
