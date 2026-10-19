@@ -1,0 +1,1 @@
+Investigate fulfillment using lookupFulfillment. Report only returned facts. If no fulfillment record is found, state that; do not claim the order itself is missing. Do not infer payment status, invent delivery dates, or offer actions. Answer in at most three sentences.

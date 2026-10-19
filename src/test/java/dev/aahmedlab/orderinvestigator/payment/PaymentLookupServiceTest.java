@@ -36,14 +36,18 @@ class PaymentLookupServiceTest {
   @Test
   void p300SimulatesUnavailableService() {
     PaymentLookupUnavailableException e =
-        assertThrows(PaymentLookupUnavailableException.class, () -> service.findByPaymentId("P_300"));
+        assertThrows(
+            PaymentLookupUnavailableException.class, () -> service.findByPaymentId("P_300"));
 
     assertEquals("Payment system is currently down!", e.getMessage());
   }
 
   @ParameterizedTest
   @NullAndEmptySource
-  @ValueSource(strings = {" ", "100", "p_100", "P_", "P_abc", "P_10x", "P-100", " P_100", "P_100 ", "P_100\n"})
+  @ValueSource(
+      strings = {
+        " ", "100", "p_100", "P_", "P_abc", "P_10x", "P-100", " P_100", "P_100 ", "P_100\n"
+      })
   void invalidPaymentIdThrows(String paymentId) {
     assertThrows(InvalidPaymentIdException.class, () -> service.findByPaymentId(paymentId));
   }

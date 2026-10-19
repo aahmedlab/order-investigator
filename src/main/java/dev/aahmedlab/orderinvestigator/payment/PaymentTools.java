@@ -12,21 +12,30 @@ public class PaymentTools {
     this.paymentLookupService = paymentLookupService;
   }
 
-  @Tool
+  @Tool(
+      description =
+          "Retrieve recorded payment status "
+              + "and any failure reason using the payment ID returned by lookupOrder. "
+              + "Reports invalid IDs, missing records, or service unavailability distinctly.")
   public String lookupPayment(final String paymentId) {
     Optional<PaymentDetails> paymentDetailsOpt;
     try {
       paymentDetailsOpt = paymentLookupService.findByPaymentId(paymentId);
     } catch (PaymentLookupUnavailableException e) {
       return "Payment ID: "
-              + paymentId + "\n"
-              + "error  : PAYMENT_LOOKUP_UNAVAILABLE" + "\n"
-              + "message: the payment service is temporarily unavailable";
+          + paymentId
+          + "\n"
+          + "error  : PAYMENT_LOOKUP_UNAVAILABLE"
+          + "\n"
+          + "message: the payment service is temporarily unavailable";
     } catch (InvalidPaymentIdException e) {
       return "Payment ID: "
-              + paymentId + "\n"
-              + "error  : INVALID_PAYMENT_ID" + "\n"
-              + "message: " + e.getMessage();
+          + paymentId
+          + "\n"
+          + "error  : INVALID_PAYMENT_ID"
+          + "\n"
+          + "message: "
+          + e.getMessage();
     }
 
     if (paymentDetailsOpt.isEmpty()) {

@@ -1,5 +1,13 @@
 # Order Investigator
 
+[![CI](https://github.com/aahmedlab/order-investigator/actions/workflows/ci.yml/badge.svg)](https://github.com/aahmedlab/order-investigator/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/aahmedlab/order-investigator/badges/coverage.json)](https://github.com/aahmedlab/order-investigator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Build](https://img.shields.io/badge/Build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Tests](https://img.shields.io/badge/Tests-JUnit%205-25A162?logo=junit5&logoColor=white)](https://junit.org/junit5/)
+[![Formatting](https://img.shields.io/badge/Style-google--java--format-4285F4?logo=google&logoColor=white)](https://github.com/google/google-java-format)
+
 A Java command-line application built with Spring Boot and Spring AI that investigates order failures using model-requested tools and synthetic order/payment records.
 
 This is a learning project. It explores evidence-based answers, tool execution, failure handling, and bounded agent behavior. It does not connect to real orders or payment services.
