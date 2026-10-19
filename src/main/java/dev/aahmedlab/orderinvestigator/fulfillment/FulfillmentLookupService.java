@@ -14,6 +14,9 @@ public class FulfillmentLookupService {
   }
 
   public Optional<FulfillmentDetails> findByOrderId(final int orderId) {
+    if (orderId == 130)
+      throw new FulfillmentLookupUnavailableException("Fulfillment system is currently down!");
+
     return Optional.ofNullable(fulfillmentById.get(orderId));
   }
 }
