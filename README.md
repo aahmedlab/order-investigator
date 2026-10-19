@@ -33,6 +33,13 @@ Working agreement: Abdul writes application code. Guidance should give one concr
 5. Java returns the payment details or an explicit error outcome.
 6. The model answers using the available evidence.
 
+With the coordinator (multi-agent path), the flow is delegated instead:
+
+1. `InvestigationCoordinator` receives the question and can call two specialist tools: `investigatePayment` and `investigateFulfillment`.
+2. `PaymentSpecialist` has its own system prompt and may use only the order and payment tools.
+3. `FulfillmentSpecialist` has its own system prompt and may use only the fulfillment tool.
+4. Each specialist returns text findings; the coordinator combines them without inventing a causal link between payment and fulfillment.
+
 Spring AI executes the registered tools and manages the exchanges with the model. Application code controls validation and configured tool-call limits.
 
 ## Stack and structure
@@ -49,9 +56,11 @@ Packages under `dev.aahmedlab.orderinvestigator`:
 |---|---|
 | `order` | Order record, fixtures, lookup service, and tool |
 | `payment` | Payment record, fixtures, validation, exceptions, and tool |
+| `fulfillment` | Fulfillment record, fixtures, lookup service, tool, and specialist agent |
+| `coordinator` | Coordinator agent that delegates to the payment and fulfillment specialists |
 | `runner` | Prompt loading and scenario execution |
 
-System instructions are loaded as UTF-8 from `src/main/resources/prompts/order-investigator-system.txt`. Missing, unreadable, or blank instructions fail startup.
+Each agent loads its own system instructions as UTF-8 from `src/main/resources/prompts/` (`order-investigator-system.txt` for payment, `fulfillment-investigator-system.txt`, `coordinator-specific-system.txt`). For example, payment instructions come from `src/main/resources/prompts/order-investigator-system.txt`. Missing, unreadable, or blank instructions fail startup.
 
 ## Running locally
 
@@ -180,6 +189,19 @@ The developer supplied three further answers for the same conflicting-payment-ID
 
 Tool traces were not confirmed separately for these additional runs. Record them as three successful answer observations, not three verified execution traces or a reliability benchmark. Phrases such as “I could not use P_200” describe observed model behavior, not an application-enforced restriction on payment access. No further repeated breakpoint checks are required before proceeding to delegation.
 
+## Testing and CI
+
+```bash
+./mvnw verify          # compile, run tests, check formatting, write the coverage report
+./mvnw spotless:apply  # fix formatting
+```
+
+- Tests use JUnit 5 and Mockito. They never call the model, so no API key is needed. Specialists and the coordinator are tested with a mocked `ChatClient`, which checks the prompt and question sent and the content returned, not model behavior.
+- Formatting uses google-java-format through Spotless; `verify` fails on unformatted code.
+- The JaCoCo coverage report is written to `target/site/jacoco/index.html`.
+- GitHub Actions (`.github/workflows/ci.yml`) runs `./mvnw -B clean verify` on JDK 25 for pushes and pull requests to `main`. After a push to `main`, it publishes the coverage percentage to `coverage.json` on the `badges` branch, which the Coverage badge reads.
+- `main` is protected by a ruleset: no deletion or force pushes, and changes need a pull request with a passing `build` check.
+
 ## Current limitations
 
 - Synthetic records and a simulated outage; no production integrations.
@@ -187,3 +209,7 @@ Tool traces were not confirmed separately for these additional runs. Record them
 - Tool descriptions and prompts influence behavior but do not guarantee correctness.
 - Manual scenario observations are a baseline, not proof of reliability across repeated runs.
 - No real refunds, cancellations, or payment mutations.
+
+## License
+
+Released under the [MIT License](LICENSE).
