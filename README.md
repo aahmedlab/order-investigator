@@ -8,7 +8,7 @@
 [![Tests](https://img.shields.io/badge/Tests-JUnit%205-25A162?logo=junit5&logoColor=white)](https://junit.org/junit5/)
 [![Formatting](https://img.shields.io/badge/Style-google--java--format-4285F4?logo=google&logoColor=white)](https://github.com/google/google-java-format)
 
-A Java command-line application built with Spring Boot and Spring AI that investigates order failures using model-requested tools and synthetic order/payment records.
+A Java command-line application built with Spring Boot and Spring AI. A coordinator delegates payment and fulfillment investigations to specialists using synthetic order, payment, and fulfillment records.
 
 This is a learning project. It explores evidence-based answers, tool execution, failure handling, and bounded agent behavior. It does not connect to real orders or payment services.
 
@@ -16,29 +16,24 @@ This is a learning project. It explores evidence-based answers, tool execution, 
 
 This project belongs to Production LLM Engineering Development. Its focus is practical agent engineering with Java and Spring AI, extending prior production LLM/RAG work at RevCrew. In the inspected RevCrew email/reply pipeline, application code chooses retrieval, generation, verification, and routing. Here, the model can request registered Java tools and use their results to choose the next operation.
 
-The single-agent baseline is implemented: order/payment tools, UTF-8 resource-based instructions, payment-ID validation, explicit missing-data/outage outcomes, and a verified tool-call budget. The basic tool exchange has been traced in IntelliJ. Existing behavior checks and limitations are recorded below. These observations do not establish production readiness or Java-enforced order ownership.
+The current application uses `InvestigationCoordinator`, `PaymentSpecialist`, and `FulfillmentSpecialist`. Each has its own model conversation and UTF-8 system instructions. Java registers separate tool sets: the coordinator sees only the two specialist tools, the payment specialist sees order/payment lookups, and the fulfillment specialist sees fulfillment lookup. There is no separate single-agent runner in the current application.
 
-**Next learning milestone: multi-agent delegation.** Preserve the current payment investigation, add a fulfillment specialist with synthetic evidence, and introduce a coordinator. Learn what each specialist receives, which tools it can use, how the coordinator delegates and combines evidence, and how partial failures and nested tool-call budgets are handled. Start with one understandable end-to-end delegated investigation. Different agents do not require different model vendors or separate services.
+**Current learning milestone: partial failures across delegated investigations.** Payment delegation has been observed with order ID 123, and a combined answer for order 129 reported captured payment and an out-of-stock fulfillment hold. These are manual observations, not a reliability benchmark. A synthetic fulfillment outage for order 130 is being added; translating that outage into a tool result and verifying end-to-end partial failure remain unfinished. Shared investigation-wide budgets are also not yet established. Different agents do not require different model vendors or separate services.
 
-A fixed Java workflow, additional documentation exercises, publishing work, and repeated manual breakpoint checks are not prerequisites for this next milestone. Caching and other broader topics remain possible later experiments, not immediate scope. Do not restart the project or rebuild the working baseline.
+A fixed Java workflow, additional documentation exercises, publishing work, and repeated manual breakpoint checks are not prerequisites for learning delegation. Caching and other broader topics are deferred. Preserve the working payment investigation and synthetic examples.
 
 Working agreement: Abdul writes application code. Guidance should give one concrete step at a time, explain its purpose, connect it to RevCrew or distributed-systems knowledge, and define completion. Provide code or modify files only when explicitly requested. Use a short relevant official reading at the point it is needed. Inspect the actual current files before giving line-specific instructions; avoid unrelated prompt rewrites and refactoring detours. Verify framework APIs against the installed Spring AI version.
 
 ## How it works
 
-1. The runner sends a question, system instructions, and tool definitions to the model.
-2. The model can request `lookupOrder` with an order ID.
-3. Java retrieves the order and returns its status and linked payment ID.
-4. When payment details are needed, the model can request `lookupPayment` using that returned payment ID.
-5. Java returns the payment details or an explicit error outcome.
-6. The model answers using the available evidence.
+1. `InvestigationScenarioRunner` passes the selected user question to `InvestigationCoordinator`.
+2. The coordinator's model can request `investigatePayment(orderId)` or `investigateFulfillment(orderId)`. Spring AI invokes the requested Java method.
+3. `PaymentSpecialist` starts its own model conversation with only `lookupOrder` and `lookupPayment`. It retrieves the order and, when needed, its linked payment.
+4. `FulfillmentSpecialist` starts its own model conversation with only `lookupFulfillment` and retrieves fulfillment evidence by order ID.
+5. Each specialist returns text findings as the coordinator's tool result. The coordinator receives these findings, not the specialist's internal conversation.
+6. The coordinator's model combines the findings and returns the final answer to the runner. Its instructions prohibit invented causes and unsupported actions.
 
-With the coordinator (multi-agent path), the flow is delegated instead:
-
-1. `InvestigationCoordinator` receives the question and can call two specialist tools: `investigatePayment` and `investigateFulfillment`.
-2. `PaymentSpecialist` has its own system prompt and may use only the order and payment tools.
-3. `FulfillmentSpecialist` has its own system prompt and may use only the fulfillment tool.
-4. Each specialist returns text findings; the coordinator combines them without inventing a causal link between payment and fulfillment.
+The prompt requests payment before fulfillment for combined questions. This is model guidance, not Java-enforced sequencing; tool-registration order is not an execution schedule.
 
 Spring AI executes the registered tools and manages the exchanges with the model. Application code controls validation and configured tool-call limits.
 
@@ -55,10 +50,10 @@ Packages under `dev.aahmedlab.orderinvestigator`:
 | Package | Responsibility |
 |---|---|
 | `order` | Order record, fixtures, lookup service, and tool |
-| `payment` | Payment record, fixtures, validation, exceptions, and tool |
+| `payment` | Payment record, fixtures, validation, exceptions, tool, and specialist agent |
 | `fulfillment` | Fulfillment record, fixtures, lookup service, tool, and specialist agent |
 | `coordinator` | Coordinator agent that delegates to the payment and fulfillment specialists |
-| `runner` | Prompt loading and scenario execution |
+| `runner` | Scenario selection, coordinator invocation, and answer printing |
 
 Each agent loads its own system instructions as UTF-8 from `src/main/resources/prompts/` (`order-investigator-system.txt` for payment, `fulfillment-investigator-system.txt`, `coordinator-specific-system.txt`). For example, payment instructions come from `src/main/resources/prompts/order-investigator-system.txt`. Missing, unreadable, or blank instructions fail startup.
 
@@ -88,10 +83,17 @@ API usage requires available API credits. Do not commit credentials or share a r
 | `payment_lookup_unavailable` | Order 128 links to P_300, which simulates an outage | Report inability to retrieve payment details without claiming the record is absent |
 | `conflicting_payment_claim` | User attributes order 123's failure to a bank outage, but P_100 records CARD_EXPIRED | Retrieve the linked payment and report the recorded cause without confirming the unsupported claim |
 | `conflicting_payment_id` | User supplies P_200 and asks to skip the order lookup, but order 123 links to P_100 | Use the order's recorded payment link and avoid the unrelated lookup |
+| `payment_and_fulfillment` | Order 129 links to captured payment P_400; fulfillment is HELD with reason OUT_OF_STOCK | Report payment capture and the recorded fulfillment hold without inventing a causal connection |
+
+The runner currently selects `payment_and_fulfillment`. These are scenario definitions and expected behaviors; historical observations below were made before the coordinator was introduced and do not automatically verify the current delegated path.
+
+Fulfillment lookup for order 130 now simulates service unavailability by throwing `FulfillmentLookupUnavailableException`. This is a service-level fixture, not yet a completed runner scenario or a handled tool outcome. An unrecorded ID such as 999 still returns no fulfillment record; that is distinct from unavailability and does not establish that the order itself is missing.
 
 Payment IDs must match `P_` followed by one or more digits. Invalid IDs are rejected before lookup. The payment tool distinguishes invalid input, missing records, and simulated service unavailability.
 
-## Tool-call budget experiment
+## Historical single-agent tool-call budget experiment
+
+This experiment predates the coordinator and used one model conversation with direct order/payment tools. It is retained as learning evidence, not a description of the current runner. The configured limit remains 2, but these results do not establish a shared cap across coordinator and specialist calls.
 
 ### Objective
 
@@ -137,7 +139,7 @@ Connection to prior production work: retry limits bound repeated attempts, concu
 
 Reference: [Spring AI tool-call limits](https://docs.spring.io/spring-ai/reference/api/tools.html#_tool_call_limits).
 
-## Conflicting-claim evaluation
+## Historical single-agent conflicting-claim evaluation
 
 ### Objective
 
@@ -160,7 +162,7 @@ The supported conclusion is that the recorded rejection reason is CARD_EXPIRED a
 
 The prompt and fixtures were left unchanged for this experiment. This is one manually observed run, not a guarantee of repeatable behavior. The connection to earlier production evaluation work is checking both evidence use in the answer and the tool sequence that obtained that evidence.
 
-## Conflicting payment-ID evaluation
+## Historical single-agent conflicting payment-ID evaluation
 
 ### Objective
 
@@ -197,6 +199,7 @@ Tool traces were not confirmed separately for these additional runs. Record them
 ```
 
 - Tests use JUnit 5 and Mockito. They never call the model, so no API key is needed. Specialists and the coordinator are tested with a mocked `ChatClient`, which checks the prompt and question sent and the content returned, not model behavior.
+- The broader test suite was added separately by Abdul using AI in the IDE; it was not implemented as part of the hands-on delegation checkpoints in this learning session. Keep automated checks separate from manually observed model behavior.
 - Formatting uses google-java-format through Spotless; `verify` fails on unformatted code.
 - The JaCoCo coverage report is written to `target/site/jacoco/index.html`.
 - GitHub Actions (`.github/workflows/ci.yml`) runs `./mvnw -B clean verify` on JDK 25 for pushes and pull requests to `main`. After a push to `main`, it publishes the coverage percentage to `coverage.json` on the `badges` branch, which the Coverage badge reads.
@@ -204,7 +207,8 @@ Tool traces were not confirmed separately for these additional runs. Record them
 
 ## Current limitations
 
-- Synthetic records and a simulated outage; no production integrations.
+- Synthetic records and simulated service outages; no production integrations. Fulfillment-outage handling is still being implemented.
+- No Java-enforced delegation sequence or verified shared investigation-wide budget.
 - No customer identity or order-ownership enforcement for real-data use.
 - Tool descriptions and prompts influence behavior but do not guarantee correctness.
 - Manual scenario observations are a baseline, not proof of reliability across repeated runs.

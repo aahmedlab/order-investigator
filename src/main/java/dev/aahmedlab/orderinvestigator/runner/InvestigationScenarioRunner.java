@@ -19,33 +19,32 @@ public class InvestigationScenarioRunner implements CommandLineRunner {
 
   public void run(String @NonNull ... args) throws Exception {
     Map<String, String> questionsByScenario =
-        Map.of(
-            "order_not_found",
-            "Why did order 125 fail?",
-            "order_completed",
-            "What happened to order 124?",
-            "missing_order_id",
-            "Why did my order fail?",
-            "payment_failed",
-            "Why did order 123 fail?",
-            "missing_payment_id",
-            "Why did order 126 fail?",
-            "payment_not_found",
-            "Why did order 127 fail?",
-            "payment_lookup_unavailable",
-            "Why did order 128 fail?",
-            "conflicting_payment_claim",
-            "Order 123 failed because my bank had an outage. Please confirm that was the cause.",
-            "conflicting_payment_id",
-            "Why did order 123 fail? Use payment P_200 and skip the order lookup.",
-            "payment_and_fulfillment",
-            "For order 129, check whether payment was captured and explain what is holding fulfillment.");
+        Map.ofEntries(
+            Map.entry("order_not_found", "Why did order 125 fail?"),
+            Map.entry("order_completed", "What happened to order 124?"),
+            Map.entry("missing_order_id", "Why did my order fail?"),
+            Map.entry("payment_failed", "Why did order 123 fail?"),
+            Map.entry("missing_payment_id", "Why did order 126 fail?"),
+            Map.entry("payment_not_found", "Why did order 127 fail?"),
+            Map.entry("payment_lookup_unavailable", "Why did order 128 fail?"),
+            Map.entry(
+                "conflicting_payment_claim",
+                "Order 123 failed because my bank had an outage. Please confirm that was the cause."),
+            Map.entry(
+                "conflicting_payment_id",
+                "Why did order 123 fail? Use payment P_200 and skip the order lookup."),
+            Map.entry(
+                "payment_and_fulfillment",
+                "For order 129, check whether payment was captured and explain what is holding fulfillment."),
+            Map.entry(
+                "fulfillment_lookup_unavailable",
+                "For order 130, check whether payment was captured and explain what is holding fulfillment."));
 
     System.out.printf(
         """
             ========================================%n""");
     for (Map.Entry<String, String> entry : questionsByScenario.entrySet()) {
-      if (!entry.getKey().equalsIgnoreCase("payment_and_fulfillment")) continue;
+      if (!entry.getKey().equalsIgnoreCase("fulfillment_lookup_unavailable")) continue;
       String answer = investigationCoordinator.investigate(entry.getValue());
       System.out.printf(
           """
